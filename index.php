@@ -238,10 +238,26 @@
         <div class="table-wrapper">
             <div class="table-title">
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
 						<h2>CRUD <b>Postres</b></h2>
 					</div>
-					<div class="col-sm-6">
+					 <div class="col-sm-4">
+					 	
+					 	<form class="form-inline">
+						  <div class="form-group mb-2">
+						   <input class="form-control form-control-sm" type="text" placeholder="Buscar un postre..." name="postre" id="postre">
+						  </div>
+						  <div class="form-group mb-2">
+						   <button id="submit_button" type="button" onclick="buscar(postre.value)" class="btn btn-primary mb-2">Buscar  </button>
+						  </div>
+						  
+						</form>
+
+
+						
+          				
+					</div>
+					<div class="col-sm-4">
 						<a href="crear.php" class="btn btn-success"><i class="material-icons">&#xE147;</i> <span>Agregar Postre</span></a>
 
 						<a onclick="signoutUser();" class="btn btn-info"><i class="material-icons">&#xe01c;</i> <span>Logout</span></a>
@@ -289,18 +305,28 @@
   };
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
+   var refDB = firebase.database().ref().child('postres');
+	var postres={};
 
   firebase.auth().onAuthStateChanged(function(user) {
   if (user) {
     // show your main content
- var refDB = firebase.database().ref().child('postres');
-var usuarios={};
-refDB.on('value',function(datos)
+    ver();
+  } else {
+    // redirect to login
+    
+    location.assign('login.php');
+  }
+})
+
+
+function ver(){
+	refDB.on('value',function(datos)
 {
     $("tbody").children().remove();
-    usuarios=datos.val();
+    postres=datos.val();
     // Recorremos los productos y los mostramos
-    $.each(usuarios, function(indice,valor)
+    $.each(postres, function(indice,valor)
     {
         var tBody = document.getElementById('dataTable').lastElementChild;
         var tr1 = document.createElement('tr');
@@ -325,12 +351,49 @@ refDB.on('value',function(datos)
 },function(objetoError){
     console.log('Error de lectura:'+objetoError.code);
 });
-  } else {
-    // redirect to login
-    
-    location.assign('login.php');
+}
+
+function buscar(postre)
+{
+  if(postre!='')
+  {
+
+   refDB.orderByChild('nombre').equalTo(postre).limitToFirst(1).on('value',function(datos)
+    {
+       $("tbody").children().remove();
+    postres=datos.val();
+    // Recorremos los productos y los mostramos
+    $.each(postres, function(indice,valor)
+    {
+        var tBody = document.getElementById('dataTable').lastElementChild;
+        var tr1 = document.createElement('tr');
+        tBody.appendChild(tr1);
+       var prevProducto='<td>'+valor.nombre+'</td>';
+        prevProducto+='<td>'+valor.precio+'</td>';
+        prevProducto+='<td>'+valor.stock+'</td>';
+        
+        prevProducto+='<td>';
+
+
+        prevProducto+='<a onclick="editar(\''+indice+'\')" class="edit"> <i class="material-icons" data-toggle="tooltip" title="Editar">&#xE254; </i> </a>';
+
+        prevProducto+='<a onclick="eliminar(\''+indice+'\')" class="delete" > <i class="material-icons" data-toggle="tooltip" title="Eliminar">&#xE872; </i> </a>';
+
+         prevProducto+='</td>';
+
+        $(prevProducto).appendTo(tr1);
+
+    });
+
+    },function(objetoError){
+     console.log('Error de lectura:'+objetoError.code);
+    });
   }
-})
+  else
+  {
+    ver();
+  }
+}
 
 function editar(id)
 {
